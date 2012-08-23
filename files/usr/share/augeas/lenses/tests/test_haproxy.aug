@@ -100,3 +100,27 @@ module Test_haproxy =
 
     test Haproxy.stats_timeout get stats_timeout_unit =
         { "stats_timeout" = "10s" }
+
+    (*
+     * BIND
+     *)
+
+    let bind_addr_list = ":443,10.0.0.1:80,*:22,::ff:80"
+
+    test Haproxy.bind_address_list get bind_addr_list =
+        { "1"
+            { "port" = "443" }
+        }
+        { "2"
+            { "address" = "10.0.0.1" }
+            { "port" = "80" }
+        }
+        { "3"
+            { "address" = "*" }
+            { "port" = "22" }
+        }
+        { "4"
+            { "address" = "::ff" }
+            { "port" = "80" }
+        }
+
