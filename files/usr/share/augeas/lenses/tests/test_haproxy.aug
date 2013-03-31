@@ -124,3 +124,8 @@ module Test_haproxy =
             { "port" = "80" }
         }
 
+    test Haproxy.abortonclose get "no option abortonclose\n" = { "abortonclose" = "false" }
+    test Haproxy.persist_rdp_cookie get "persist rdp-cookie\n" = { "persist-rdp-cookie" }
+    test Haproxy.persist_rdp_cookie get "persist rdp-cookie(foo)\n" = { "persist-rdp-cookie" = "foo" }
+
+    test Haproxy.rate_limit_sessions get "rate-limit sessions 100\n" = { "rate-limit-sessions" = "100" }

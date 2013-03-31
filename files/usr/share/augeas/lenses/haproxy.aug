@@ -9,8 +9,11 @@ module Haproxy =
     let store_to_ws = store /[^ \t]+/
     let store_time = store /[0-9]+(us|ms|s|m|h|d)?/
 
-    let bool_option (r:regexp) = [ indent . key r . eol ]
+    let simple_option (r:regexp) = [ indent . key r . eol ]
     let kv_option (r:regexp) = [ indent . key r . ws . store_to_eol . eol ]
+    let true_bool_option (r:regexp) = [ Util.del_str "option" . ws . key r . value "true" . eol ]
+    let false_bool_option (r:regexp) = [ Util.del_str "no option" . ws . key r . value "false" . eol ]
+    let bool_option (r:regexp) = ( false_bool_option r | true_bool_option r )
 
     (*************************************************************************
       LOG OPTION
@@ -54,7 +57,7 @@ module Haproxy =
     (*************************************************************************
       GLOBAL SECTION
      *************************************************************************)
-    let global_bool_opts = "daemon" | "noepoll" | "nokqueue" | "noepoll"
+    let global_simple_opts = "daemon" | "noepoll" | "nokqueue" | "noepoll"
                          | "nosepoll" | "nosplice" | "debug" | "quiet"
     let global_kv_opts = "chroot" | "gid" | "group" | "log-send-hostname"
                        | "nbproc" | "pidfile" | "uid" | "ulimit-n" | "user"
@@ -66,7 +69,7 @@ module Haproxy =
                        | "tune.sndbuf.server"
 
     let global = [ key "global" . eol .
-        (bool_option global_bool_opts|kv_option global_kv_opts|stats|log_opt)*
+        (simple_option global_simple_opts|kv_option global_kv_opts|stats|log_opt)*
         ]
 
     (*************************************************************************
@@ -167,13 +170,13 @@ module Haproxy =
 
     let default_backend = kv_option "default_backend"
 
-    let disabled = bool_option "disabled"
+    let disabled = simple_option "disabled"
 
     let dispatch = indent . [ key "dispatch" . ws
         . [ label "address" . store /[^ \t,]+/ ]
         . Util.del_str ":" . [ label "port" . store /[0-9-]+/ ] ]
 
-    let enabled = bool_option "enabled"
+    let enabled = simple_option "enabled"
 
     let errorfile = indent . [ key "errorfile" . ws
         . [ label "code" . store /[0-9]+/ ] . ws
@@ -237,6 +240,104 @@ module Haproxy =
     let monitor_net = kv_option "monitor-net"
 
     let monitor_uri = kv_option "monitor-uri"
+
+    let abortonclose = bool_option "abortonclose"
+
+    let accept_invalid_http_request = bool_option "accept-invalid-http-request"
+    
+    let accept_invalid_http_response = bool_option "accept-invalid-http-response"
+
+    let allbackups = bool_option "allbackups"
+
+    let checkcache = bool_option "checkcache"
+
+    let clitcpka = bool_option "clitcpka"
+
+    let contstats = bool_option "contstats"
+
+    let dontlog_normal = bool_option "dontlog-normal"
+
+    let dontlognull = bool_option "dontlognull"
+
+    let forceclose = bool_option "forceclose"
+
+    (* forwardfor *)
+
+    let http_no_delay = bool_option "http-no-delay"
+
+    let http_pretend_keepalive = bool_option "http-pretend-keepalive"
+
+    let http_server_close = bool_option "http-server-close"
+
+    let http_use_proxy_header = bool_option "http-use-proxy-header"
+
+    (* httpchk *)
+
+    let httpclose = bool_option "httpclose"
+
+    (* httplog *)
+
+    let http_proxy = bool_option "http_proxy"
+
+    let independant_streams = bool_option "independant-streams"
+
+    let ldap_check = bool_option "ldap-check"
+
+    let log_health_checks = bool_option "log-health-checks"
+
+    let log_separate_errors = bool_option "log-separate-errors"
+
+    let logasap = bool_option "logasap"
+
+    (* mysql-check *)
+
+    let nolinger = bool_option "nolinger"
+
+    (* originalto *)
+
+    let persist = bool_option "persist"
+
+    let redispatch = bool_option "redispatch"
+
+    (* smtpcheck *)
+
+    let socket_stats = bool_option "socket-stats"
+
+    let splice_auto = bool_option "splice-auto"
+
+    let splice_request = bool_option "splice-request"
+
+    let splice_response = bool_option "splice-response"
+
+    let srvtcpka = bool_option "srvtcpka"
+
+    let ssl_hello_chk = bool_option "ssl-hello-chk"
+
+    let tcp_smart_accept = bool_option "tcp-smart-accept"
+
+    let tcp_smart_connect = bool_option "tcp-smart-connect"
+
+    let tcpka = bool_option "tcpka"
+
+    let tcplog = bool_option "tcplog"
+
+    let transparent = bool_option "transparent"
+
+    let persist_rdp_cookie = indent . [ Util.del_str "persist rdp-cookie" . 
+        label "persist-rdp-cookie" . ( Util.del_str "(" . store /[^\)]+/ . Util.del_str ")" )?
+        ] . hard_eol
+
+    let rate_limit_sessions = indent . [ Util.del_str "rate-limit sessions" . ws .
+        label "rate-limit-sessions" . store /[0-9]+/ ] . eol
+
+    (* redirect location/prefix *)
+
+    let if_cond = [ key "if" . ws . store_to_eol ]
+    let unless_cond = [ key "unless" . ws . store_to_eol ]
+    let reqadd = indent . [ key "reqadd" . ws .
+        [ label "string" . store /[^ \t\n]([A-Za-z0-9]|\ )+[^ \t\n]/ ] .
+        ( ws . (if_cond | unless_cond ) )? ] . hard_eol
+
 
     let lns = global
 
