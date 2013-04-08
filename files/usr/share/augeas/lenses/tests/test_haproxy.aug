@@ -129,3 +129,216 @@ module Test_haproxy =
     test Haproxy.persist_rdp_cookie get "persist rdp-cookie(foo)\n" = { "persist-rdp-cookie" = "foo" }
 
     test Haproxy.rate_limit_sessions get "rate-limit sessions 100\n" = { "rate-limit-sessions" = "100" }
+
+    test Haproxy.reqadd get "reqadd X-Proxy:\ SSL if foo\n" = {
+        "reqadd" = "X-Proxy:\ SSL if foo"
+    }
+    test Haproxy.reqadd get "reqadd X-Proxy:\ SSL unless foo bar\n" = {
+        "reqadd" = "X-Proxy:\ SSL unless foo bar"
+    }
+
+    test Haproxy.reqallow get "reqallow ^Host:\ www\. if foo\n" = {
+        "reqallow" = "^Host:\ www\. if foo"
+    }
+
+    test Haproxy.stats_admin get "stats admin if LOCALHOST\n" = {
+        "stats_admin"
+            { "if" = "LOCALHOST" }
+    }
+
+    test Haproxy.stats_auth get "stats auth admin:foo\n" = {
+        "stats_auth"
+            { "user" = "admin" }
+            { "passwd" = "foo" }
+    }
+
+    test Haproxy.stats_enable get "stats enable\n" = {
+        "stats_enable"
+    }
+
+    test Haproxy.stats_realm get "stats realm foo\n" = {
+        "stats_realm" = "foo"
+    }
+
+    test Haproxy.stats_refresh get "stats refresh 100\n" = {
+        "stats_refresh" = "100"
+    }
+
+    test Haproxy.stats_scope get "stats scope .\n" = {
+        "stats_scope" = "."
+    }
+
+    test Haproxy.stats_show_desc get "stats show-desc\n" = {
+        "stats_show_desc"
+    }
+
+    test Haproxy.stats_show_desc get "stats show-desc something\n" = {
+        "stats_show_desc"
+            { "description" = "something" }
+    }
+
+    test Haproxy.stats_show_node get "stats show-node\n" = {
+        "stats_show_node"
+    }
+
+    test Haproxy.stats_show_node get "stats show-node foo\n" = {
+        "stats_show_node"
+            { "node" = "foo" }
+    }
+
+    test Haproxy.stats_uri get "stats uri /admin?stats\n" = {
+        "stats_uri" = "/admin?stats"
+    }
+
+    test Haproxy.tcp_request_content_accept get "tcp-request content accept\n" = {
+        "tcp_request_content_accept"
+    }
+
+    test Haproxy.tcp_request_content_accept get "tcp-request content accept if FOO\n" = {
+        "tcp_request_content_accept"
+            { "if" = "FOO" }
+    }
+
+    test Haproxy.tcp_request_content_accept get "tcp-request content accept unless A\n" = {
+        "tcp_request_content_accept"
+            { "unless" = "A" }
+    }
+
+    test Haproxy.tcp_request_content_reject get "tcp-request content reject\n" = {
+        "tcp_request_content_reject"
+    }
+
+    test Haproxy.tcp_request_content_reject get "tcp-request content reject if FOO\n" = {
+        "tcp_request_content_reject"
+            { "if" = "FOO" }
+    }
+
+    test Haproxy.tcp_request_content_reject get "tcp-request content reject unless A\n" = {
+        "tcp_request_content_reject"
+            { "unless" = "A" }
+    }
+
+    test Haproxy.tcp_request_inspect_delay get "tcp-request inspect-delay 100\n" = {
+        "tcp_request_inspect_delay" = "100"
+    }
+
+    test Haproxy.timeout_check get "timeout check 100\n" = {
+        "timeout_check" = "100"
+    }
+
+    test Haproxy.timeout_client get "timeout client 100\n" = {
+        "timeout_client" = "100"
+    }
+
+    test Haproxy.timeout_clitimeout get "timeout clitimeout 100\n" = {
+        "timeout_clitimeout" = "100"
+    }
+
+    test Haproxy.timeout_connect get "timeout connect 100\n" = {
+        "timeout_connect" = "100"
+    }
+
+    test Haproxy.timeout_contimeout get "timeout contimeout 100\n" = {
+        "timeout_contimeout" = "100"
+    }
+
+    test Haproxy.timeout_http_keep_alive get "timeout http-keep-alive 100\n" = {
+        "timeout_http_keep_alive" = "100"
+    }
+
+    test Haproxy.timeout_http_request get "timeout http-request 100\n" = {
+        "timeout_http_request" = "100"
+    }
+
+    test Haproxy.timeout_queue get "timeout queue 100\n" = {
+        "timeout_queue" = "100"
+    }
+
+    test Haproxy.timeout_server get "timeout server 100\n" = {
+        "timeout_server" = "100"
+    }
+
+    test Haproxy.timeout_srvtimeout get "timeout srvtimeout 100\n" = {
+        "timeout_srvtimeout" = "100"
+    }
+
+    test Haproxy.timeout_tarpit get "timeout tarpit 100\n" = {
+        "timeout_tarpit" = "100"
+    }
+
+    test Haproxy.use_backend get "use_backend foo if BAR\n" = {
+        "use_backend" = "foo"
+            { "if" = "BAR" }
+    }
+
+    test Haproxy.use_backend get "use_backend foo unless BAR\n" = {
+        "use_backend" = "foo"
+            { "unless" = "BAR" }
+    }
+
+    test Haproxy.http_request get "http-request allow if nagios\n" = {
+        "http_request"
+            { "allow" }
+            { "if" = "nagios"}
+    }
+
+    test Haproxy.http_request get "http-request allow if local_net auth_ok\n" = {
+        "http_request"
+            { "allow" }
+            { "if" = "local_net auth_ok" }
+    }
+
+    test Haproxy.http_request get "http-request auth realm Gimme if local_net auth_ok\n" = {
+        "http_request"
+            { "auth"
+                { "realm" = "Gimme" }
+            }
+            { "if" = "local_net auth_ok" }
+    }
+
+    test Haproxy.http_request get "http-request deny\n" = {
+        "http_request"
+            { "deny" }
+    }
+
+    test Haproxy.forwardfor get "option forwardfor except 127.0.0.1\n" = {
+        "forwardfor"
+            { "except" = "127.0.0.1" }
+    }
+
+    test Haproxy.forwardfor get "option forwardfor header X-Client if-none\n" = {
+        "forwardfor"
+            { "header" = "X-Client" }
+            { "if-none" }
+    }
+
+    test Haproxy.httpchk get "option httpchk OPTIONS * HTTP/1.1\\r\\nHost:\ www\n" = {
+        "httpchk"
+            { "method" = "OPTIONS" }
+            { "uri" = "*" }
+            { "version" = "HTTP/1.1\\r\\nHost:\ www" }
+    }
+
+    test Haproxy.httpchk get "option httpchk\n" = {
+        "httpchk"
+    }
+
+    test Haproxy.httpchk get "option httpchk /\n" = {
+        "httpchk"
+            { "uri" = "/" }
+    }
+
+    test Haproxy.httpchk get "option httpchk GET /_ping\n" = {
+        "httpchk"
+            { "method" = "GET" }
+            { "uri" = "/_ping" }
+    }
+
+    test Haproxy.httplog get "option httplog\n" = {
+        "httplog"
+    }
+
+    test Haproxy.httplog get "option httplog clf\n" = {
+        "httplog"
+            { "clf" }
+    }

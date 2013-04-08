@@ -5,8 +5,8 @@ module Haproxy =
     let hard_eol = del "\n" "\n"
     let indent = del /[ \t]{0,4}/ "    "
     let ws = del /[ \t]+/ " "
-    let store_to_eol = store /[^ \t\n]+/
-    let store_to_ws = store /[^ \t]+/
+    let store_to_eol = store Rx.space_in
+    let store_to_ws = store /[^ \t\n]+/
     let store_time = store /[0-9]+(us|ms|s|m|h|d)?/
 
     let simple_option (r:regexp) = [ indent . key r . eol ]
@@ -38,14 +38,14 @@ module Haproxy =
       STATS OPTION
      *************************************************************************)
     let stats_level = "user" | "operator" | "admin"
-    let stats_uid = [ key /(uid|user)/ . ws . store_to_eol ]
-    let stats_gid = [ key /(gid|group)/ . ws . store_to_eol ]
-    let stats_mode = [ key "mode" . ws . store_to_eol ]
+    let stats_uid = [ key /(uid|user)/ . ws . store_to_ws ]
+    let stats_gid = [ key /(gid|group)/ . ws . store_to_ws ]
+    let stats_mode = [ key "mode" . ws . store_to_ws ]
     let stats_socket = [ indent . Util.del_str "stats socket" .
-        label "stats_socket" . [ ws . label "path" . store_to_eol ] .
-        ( [ ws . key /(uid|user)/ . ws . store_to_eol ] )? .
-        ( [ ws . key /(gid|group)/ . ws . store_to_eol ] )? .
-        ( [ ws . key "mode" . ws . store_to_eol ] )? .
+        label "stats_socket" . [ ws . label "path" . store_to_ws ] .
+        ( [ ws . key /(uid|user)/ . ws . store_to_ws ] )? .
+        ( [ ws . key /(gid|group)/ . ws . store_to_ws ] )? .
+        ( [ ws . key "mode" . ws . store_to_ws ] )? .
         ( [ ws . key "level" . ws . store stats_level ] )?
         ] . eol
     let stats_timeout = [ indent . Util.del_str "stats timeout" .
@@ -216,7 +216,15 @@ module Haproxy =
     let http_check_send_state = indent . Util.del_str "http-check send-state"
         . [ label "http_check_keep_state" ] . eol
 
-    (* #XXX http-request *)
+    let http_request =
+        let allow = [ key "allow" ]
+        in let deny = [ key "deny" ]
+        in let realm = [ key "realm" . Sep.space . store Rx.no_spaces ]
+        in let auth = [ key "auth" . ( Sep.space . realm )? ]
+        in let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in Util.indent . [ Util.del_str "http-request" . label "http_request" .
+            Sep.space . ( allow | deny | auth ) . ( Sep.space . cond )? ]
+            . Util.eol
 
     let http_send_name_header = kv_option "http-send-name-header"
 
@@ -261,7 +269,13 @@ module Haproxy =
 
     let forceclose = bool_option "forceclose"
 
-    (* forwardfor *)
+    let forwardfor =
+        let except = [ key "except" . Sep.space . store Rx.no_spaces ]
+        in let header = [ key "header" . Sep.space . store Rx.no_spaces ]
+        in let if_none = [ key "if-none" ]
+        in Util.indent . [ Util.del_str "option forwardfor" . label "forwardfor" .
+            ( Sep.space . except )? . ( Sep.space . header )? .
+            ( Sep.space . if_none )? ] . Util.eol
 
     let http_no_delay = bool_option "http-no-delay"
 
@@ -271,11 +285,19 @@ module Haproxy =
 
     let http_use_proxy_header = bool_option "http-use-proxy-header"
 
-    (* httpchk *)
+    let httpchk =
+        let uri = [ label "uri" . Sep.space . store Rx.no_spaces ]
+        in let method = [ label "method" . Sep.space . store Rx.no_spaces ]
+        in let version = [ label "version" . Sep.space . store_to_eol ]
+        in Util.indent . [ Util.del_str "option httpchk" . label "httpchk" .
+            ( uri | method . uri . version? )? ] . Util.eol
 
     let httpclose = bool_option "httpclose"
 
-    (* httplog *)
+    let httplog =
+        let clf = [ Sep.space . key "clf" ]
+        in Util.indent . [ Util.del_str "option httplog" . label "httplog" .
+            clf? ] . Util.eol
 
     let http_proxy = bool_option "http_proxy"
 
@@ -321,7 +343,7 @@ module Haproxy =
 
     let tcplog = bool_option "tcplog"
 
-    let transparent = bool_option "transparent"
+    let old_transparent = bool_option "transparent"
 
     let persist_rdp_cookie = indent . [ Util.del_str "persist rdp-cookie" . 
         label "persist-rdp-cookie" . ( Util.del_str "(" . store /[^\)]+/ . Util.del_str ")" )?
@@ -332,12 +354,162 @@ module Haproxy =
 
     (* redirect location/prefix *)
 
-    let if_cond = [ key "if" . ws . store_to_eol ]
-    let unless_cond = [ key "unless" . ws . store_to_eol ]
-    let reqadd = indent . [ key "reqadd" . ws .
-        [ label "string" . store /[^ \t\n]([A-Za-z0-9]|\ )+[^ \t\n]/ ] .
-        ( ws . (if_cond | unless_cond ) )? ] . hard_eol
+    let reqadd = kv_option "reqadd"
 
+    let reqallow = kv_option "reqallow"
+
+    let reqiallow = kv_option "reqiallow"
+
+    let reqdel = kv_option "reqdel"
+
+    let reqidel = kv_option "reqdel"
+
+    let reqdeny = kv_option "reqdeny"
+
+    let reqideny = kv_option "reqideny"
+
+    let reqpass = kv_option "reqpass"
+
+    let reqipass = kv_option "reqipass"
+
+    let reqrep = kv_option "reqrep"
+
+    let reqirep = kv_option "reqirep"
+
+    let reqtarpit = kv_option "reqtarpit"
+
+    let reqitarpit = kv_option "reqitarpit"
+
+    let retries = kv_option "retries"
+
+    let rspadd = kv_option "rspadd"
+
+    let rspdel = kv_option "rspdel"
+
+    let rspidel = kv_option "rspidel"
+
+    let rspdeny = kv_option "rspdeny"
+
+    let rspideny = kv_option "rspideny"
+
+    let rsprep = kv_option "rsprep"
+
+    let rspirep = kv_option "rspirep"
+
+    (* XXX server *)
+
+    (* XXX source *)
+
+    let srvtimeout = kv_option "srvtimeout"
+
+    let stats_admin =
+        let cond = [ key /if|unless/ . Sep.space . store Rx.space_in ]
+        in Util.indent . [ Util.del_str "stats admin" . label "stats_admin" .
+            Sep.space . cond ] . Util.eol
+
+    let stats_auth =
+        let user = [ label "user" . store /[^ \t\n:]+/ ]
+        in let passwd = [ label "passwd" . store /[^ \t\n]+/ ]
+        in Util.indent . [ Util.del_str "stats auth" . label "stats_auth" .
+            Sep.space . user . Util.del_str ":" . passwd ] . Util.eol
+
+    let stats_enable = Util.indent . [ Util.del_str "stats enable" .
+        label "stats_enable" ] . Util.eol
+
+    let stats_hide_version = Util.indent . [ Util.del_str "stats hide-version" .
+        label "stats_hide_version" ] . Util.eol
+
+    (* XXX stats http-request *)
+
+    let stats_realm = Util.indent . [ Util.del_str "stats realm" .
+        label "stats_realm" . Sep.space . store /[^ \t\n]+/ ] . Util.eol
+
+    let stats_refresh = Util.indent . [ Util.del_str "stats refresh" .
+        label "stats_refresh" . Sep.space . store /[^ \t\n]+/ ] . Util.eol
+
+    let stats_scope = Util.indent . [ Util.del_str "stats scope" .
+        label "stats_scope" . Sep.space . store /[^ \t\n]+/ ] . Util.eol
+
+    let stats_show_desc =
+        let desc = [ label "description" . store_to_eol ]
+        in Util.indent . [ Util.del_str "stats show-desc" .
+            label "stats_show_desc" . ( Sep.space . desc )? ] . Util.eol
+
+    let stats_show_legends = Util.indent . [ Util.del_str "stats show-legends" .
+        label "stats_show_legends" ] . Util.eol
+
+    let stats_show_node =
+        let node = [ label "node" . store_to_eol ]
+        in Util.indent . [ Util.del_str "stats show-node" .
+            label "stats_show_node" . ( Sep.space . node )? ] . Util.eol
+
+    let stats_uri = Util.indent . [ Util.del_str "stats uri" .
+        label "stats_uri" . Sep.space . store_to_eol ] . Util.eol
+
+    (* XXX stick match *)
+
+    (* XXX stick on *)
+
+    (* XXX stick store-request *)
+
+    (* XXX stick-table *)
+
+    let tcp_request_content_accept =
+        let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in Util.indent . [ Util.del_str "tcp-request content accept" .
+            label "tcp_request_content_accept" . ( Sep.space . cond )? ] .
+            Util.eol
+
+    let tcp_request_content_reject =
+        let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in Util.indent . [ Util.del_str "tcp-request content reject" .
+            label "tcp_request_content_reject" . ( Sep.space . cond )? ] .
+            Util.eol
+
+    let tcp_request_inspect_delay = Util.indent .
+        [ Util.del_str "tcp-request inspect-delay" .
+            label "tcp_request_inspect_delay" . Sep.space . store_to_eol ] .
+        Util.eol
+
+    let timeout_check = Util.indent . [ Util.del_str "timeout check" .
+        label "timeout_check" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_client = Util.indent . [ Util.del_str "timeout client" .
+        label "timeout_client" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_clitimeout = Util.indent . [ Util.del_str "timeout clitimeout" .
+        label "timeout_clitimeout" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_connect = Util.indent . [ Util.del_str "timeout connect" .
+        label "timeout_connect" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_contimeout = Util.indent . [ Util.del_str "timeout contimeout" .
+        label "timeout_contimeout" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_http_keep_alive = Util.indent . [ Util.del_str "timeout http-keep-alive" .
+        label "timeout_http_keep_alive" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_http_request = Util.indent . [ Util.del_str "timeout http-request" .
+        label "timeout_http_request" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_queue = Util.indent . [ Util.del_str "timeout queue" .
+        label "timeout_queue" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_server = Util.indent . [ Util.del_str "timeout server" .
+        label "timeout_server" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_srvtimeout = Util.indent . [ Util.del_str "timeout srvtimeout" .
+        label "timeout_srvtimeout" . Sep.space . store_to_eol ] . Util.eol
+
+    let timeout_tarpit = Util.indent . [ Util.del_str "timeout tarpit" .
+        label "timeout_tarpit" . Sep.space . store_to_eol ] . Util.eol
+
+    let transparent = simple_option "transparent"
+
+    let use_backend =
+        let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in Util.indent . [ key "use_backend" . Sep.space . store Rx.no_spaces .
+        Sep.space . cond ] . Util.eol
 
     let lns = global
 
