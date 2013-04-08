@@ -311,17 +311,29 @@ module Haproxy =
 
     let logasap = bool_option "logasap"
 
-    (* mysql-check *)
+    let mysql_check =
+        let user = [ key "user" . Sep.space . store Rx.no_spaces ]
+        in Util.indent . [ Util.del_str "option mysql-check" .
+            label "mysql_check" . ( Sep.space . user )? ] . Util.eol
 
     let nolinger = bool_option "nolinger"
 
-    (* originalto *)
+    let originalto =
+        let except = [ key "except" . Sep.space . store Rx.no_spaces ]
+        in let header = [ key "header" . Sep.space . store Rx.no_spaces ]
+        in Util.indent . [ Util.del_str "option originalto" . label "originalto" .
+            ( Sep.space . except )? . ( Sep.space . header )? ] . Util.eol
+
 
     let persist = bool_option "persist"
 
     let redispatch = bool_option "redispatch"
 
-    (* smtpcheck *)
+    let smtpchk =
+        let hello = [ label "hello" . store Rx.no_spaces ]
+        in let domain = [ label "domain" . store Rx.no_spaces ]
+        in Util.indent . [ Util.del_str "option smtpchk" . label "smtpchk" .
+            ( Sep.space . hello . Sep.space . domain )? ] . Util.eol
 
     let socket_stats = bool_option "socket-stats"
 
@@ -352,7 +364,24 @@ module Haproxy =
     let rate_limit_sessions = indent . [ Util.del_str "rate-limit sessions" . ws .
         label "rate-limit-sessions" . store /[0-9]+/ ] . eol
 
-    (* redirect location/prefix *)
+    let redirect =
+        let location = [ key "location" ]
+        in let prefix = [ key "prefix" ]
+        in let to = [ label "to" . store Rx.no_spaces ]
+        in let code = [ key "code" . Sep.space . store Rx.no_spaces ]
+        in let option_drop_query = [ key "drop-query" ]
+        in let option_append_slash = [ key "append-slash" ]
+        in let option_set_cookie = [ key "set-cookie" . Sep.space .
+            [ label "cookie" . store /[^ \t\n=]+/ ] .
+            ( [ Util.del_str "=" . label "value" . store Rx.no_spaces ] )? ]
+        in let option_clear_cookie = [ key "clear-cookie" . Sep.space .
+            [ label "cookie" . store Rx.no_spaces ] ]
+        in let options = (option_drop_query | option_append_slash | option_set_cookie | option_clear_cookie)
+        in let option = [ label "options" . options . ( Sep.space . options )* ]
+        in let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in Util.indent . [ key "redirect" . Sep.space . ( location | prefix ) .
+            Sep.space . to . ( Sep.space . code )? . ( Sep.space . option )? .
+            ( Sep.space . cond )? ] . Util.eol
 
     let reqadd = kv_option "reqadd"
 

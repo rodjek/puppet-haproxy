@@ -342,3 +342,96 @@ module Test_haproxy =
         "httplog"
             { "clf" }
     }
+
+    test Haproxy.mysql_check get "option mysql-check\n" = {
+        "mysql_check"
+    }
+
+    test Haproxy.mysql_check get "option mysql-check user foo\n" = {
+        "mysql_check"
+            { "user" = "foo" }
+    }
+
+    test Haproxy.originalto get "option originalto\n" = {
+        "originalto"
+    }
+
+    test Haproxy.originalto get "option originalto except 127.0.0.1\n" = {
+        "originalto"
+            { "except" = "127.0.0.1" }
+    }
+
+    test Haproxy.originalto get "option originalto header X-Client-Dst\n" = {
+        "originalto"
+            { "header" = "X-Client-Dst" }
+    }
+
+    test Haproxy.originalto get "option originalto except 127.0.0.1 header X-Client-Dst\n" = {
+        "originalto"
+            { "except" = "127.0.0.1" }
+            { "header" = "X-Client-Dst" }
+    }
+
+    test Haproxy.smtpchk get "option smtpchk\n" = {
+        "smtpchk"
+    }
+
+    test Haproxy.smtpchk get "option smtpchk HELO mydomain.org\n" = {
+        "smtpchk"
+            { "hello" = "HELO" }
+            { "domain" = "mydomain.org" }
+    }
+
+    test Haproxy.redirect get "redirect prefix https://mysite.com set-cookie SEEN=1 if !foo\n" = {
+        "redirect"
+            { "prefix" }
+            { "to" = "https://mysite.com" }
+            { "options"
+                { "set-cookie"
+                    { "cookie" = "SEEN" }
+                    { "value" = "1" }
+                }
+            }
+            { "if" = "!foo" }
+    }
+
+    test Haproxy.redirect get "redirect prefix https://mysite.com if login_page !secure\n" = {
+        "redirect"
+            { "prefix" }
+            { "to" = "https://mysite.com" }
+            { "if" = "login_page !secure" }
+    }
+
+    test Haproxy.redirect get "redirect prefix http://mysite.com drop-query if login_page !uid_given\n" = {
+        "redirect"
+            { "prefix" }
+            { "to" = "http://mysite.com" }
+            { "options"
+                { "drop-query" }
+            }
+            { "if" = "login_page !uid_given" }
+    }
+
+    test Haproxy.redirect get "redirect location / clear-cookie USERID=       if logout\n" = {
+        "redirect"
+            { "location" }
+            { "to" = "/" }
+            { "options"
+                { "clear-cookie"
+                    { "cookie" = "USERID=" }
+                }
+            }
+            { "if" = "logout" }
+    }
+
+    test Haproxy.redirect get "redirect prefix / code 302 drop-query append-slash unless missing_slash\n" = {
+        "redirect"
+            { "prefix" }
+            { "to" = "/" }
+            { "code" = "302" }
+            { "options"
+                { "drop-query" }
+                { "append-slash" }
+            }
+            { "unless" = "missing_slash" }
+    }
