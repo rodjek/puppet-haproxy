@@ -435,3 +435,96 @@ module Test_haproxy =
             }
             { "unless" = "missing_slash" }
     }
+
+    test Haproxy.stick_match get "stick match src\n" = {
+        "stick_match"
+            { "pattern" = "src" }
+    }
+
+    test Haproxy.stick_match get "stick match src table pop\n" = {
+        "stick_match"
+            { "pattern" = "src" }
+            { "table" = "pop" }
+    }
+
+    test Haproxy.stick_match get "stick match src table pop if FOO\n" = {
+        "stick_match"
+            { "pattern" = "src" }
+            { "table" = "pop" }
+            { "if" = "FOO" }
+    }
+
+    test Haproxy.stick_table get "stick-table type string len 10 size 100 expire 1 nopurge\n" = {
+        "stick-table"
+            { "type" = "string"
+                { "len" = "10" }
+            }
+            { "size" = "100" }
+            { "expire" = "1" }
+            { "nopurge" }
+    }
+
+    test Haproxy.source get "source 127.0.0.1\n" = {
+        "source"
+            { "address" = "127.0.0.1" }
+    }
+
+    test Haproxy.source get "source 127.0.0.1:8000\n" = {
+        "source"
+            { "address" = "127.0.0.1" }
+            { "port" = "8000" }
+    }
+
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc 127.0.0.2:9000\n" = {
+        "source"
+            { "address" = "127.0.0.1" }
+            { "port" = "8000" }
+            { "usesrc"
+                { "address" = "127.0.0.2" }
+                { "port" = "9000" }
+            }
+    }
+
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc client\n" = {
+        "source"
+            { "address" = "127.0.0.1" }
+            { "port" = "8000" }
+            { "usesrc"
+                { "client" }
+            }
+    }
+
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc clientip\n" = {
+        "source"
+            { "address" = "127.0.0.1" }
+            { "port" = "8000" }
+            { "usesrc"
+                { "clientip" }
+            }
+    }
+
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc hdr_ip(Foo)\n" = {
+        "source"
+            { "address" = "127.0.0.1" }
+            { "port" = "8000" }
+            { "usesrc"
+                { "header" = "Foo" }
+            }
+    }
+
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc hdr_ip(Foo,5)\n" = {
+        "source"
+            { "address" = "127.0.0.1" }
+            { "port" = "8000" }
+            { "usesrc"
+                { "header" = "Foo" }
+                { "occurrence" = "5" }
+            }
+    }
+
+    test Haproxy.source get "source 127.0.0.1:8000 interface bond1\n" = {
+        "source"
+            { "address" = "127.0.0.1" }
+            { "port" = "8000" }
+            { "interface" = "bond1" }
+    }

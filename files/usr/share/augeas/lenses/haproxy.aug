@@ -427,7 +427,20 @@ module Haproxy =
 
     (* XXX server *)
 
-    (* XXX source *)
+    let source =
+        let addr = [ label "address" . store (/[^ \t\n:]+/ - /client(ip)?|hdr_ip.*/) ]
+        in let port = [ label "port" . store Rx.no_spaces ]
+        in let addr_and_port = addr . ( Util.del_str ":" . port )?
+        in let client = [ key "client" ]
+        in let clientip = [ key "clientip" ]
+        in let interface = [ key "interface" . Sep.space . store Rx.no_spaces ]
+        in let hdr = [ label "header" . store /[^ \t\n,\)]+/ ]
+        in let occ = [ label "occurrence" . store /[^ \t\n\)]+/ ]
+        in let hdr_ip = Util.del_str "hdr_ip(" . hdr .
+            ( Util.del_str "," . occ )? . Util.del_str ")"
+        in let usesrc = [ key "usesrc" . Sep.space . ( clientip | client | addr_and_port | hdr_ip ) ] 
+        in Util.indent . [ key "source" . Sep.space . addr_and_port .
+            ( Sep.space . ( usesrc | interface ) )? ] . Util.eol
 
     let srvtimeout = kv_option "srvtimeout"
 
@@ -448,7 +461,15 @@ module Haproxy =
     let stats_hide_version = Util.indent . [ Util.del_str "stats hide-version" .
         label "stats_hide_version" ] . Util.eol
 
-    (* XXX stats http-request *)
+    let stats_http_request =
+        let allow = [ key "allow" ]
+        in let deny = [ key "deny" ]
+        in let realm = [ key "realm" . Sep.space . store Rx.no_spaces ]
+        in let auth = [ key "auth" . ( Sep.space . realm )? ]
+        in let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in Util.indent . [ Util.del_str "stats http-request" .
+            label "stats_http_request" . Sep.space . ( allow | deny | auth ) .
+            ( Sep.space . cond )? ] . Util.eol
 
     let stats_realm = Util.indent . [ Util.del_str "stats realm" .
         label "stats_realm" . Sep.space . store /[^ \t\n]+/ ] . Util.eol
@@ -475,13 +496,43 @@ module Haproxy =
     let stats_uri = Util.indent . [ Util.del_str "stats uri" .
         label "stats_uri" . Sep.space . store_to_eol ] . Util.eol
 
-    (* XXX stick match *)
+    let stick_match =
+        let table = [ key "table" . Sep.space . store Rx.no_spaces ]
+        in let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in let pattern = [ label "pattern" . store Rx.no_spaces ]
+        in Util.indent . [ Util.del_str "stick match" . label "stick_match" .
+            Sep.space . pattern . ( Sep.space . table )? .
+            ( Sep.space . cond )? ] . Util.eol
 
-    (* XXX stick on *)
+    let stick_on =
+        let table = [ key "table" . Sep.space . store Rx.no_spaces ]
+        in let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in let pattern = [ label "pattern" . store Rx.no_spaces ]
+        in Util.indent . [ Util.del_str "stick on" . label "stick_on" .
+            Sep.space . pattern . ( Sep.space . table )? .
+            ( Sep.space . cond )? ] . Util.eol
 
-    (* XXX stick store-request *)
+    let stick_store_request =
+        let table = [ key "table" . Sep.space . store Rx.no_spaces ]
+        in let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
+        in let pattern = [ label "pattern" . store Rx.no_spaces ]
+        in Util.indent . [ Util.del_str "stick store-request" .
+            label "stick_store_request" . Sep.space . pattern .
+            ( Sep.space . table )? . ( Sep.space . cond )? ] . Util.eol
 
-    (* XXX stick-table *)
+    let stick_table =
+        let type_ip = [ key "type" . Sep.space . store "ip" ]
+        in let type_integer = [ key "type" . Sep.space . store "integer" ]
+        in let len = [ key "len" . Sep.space . store Rx.no_spaces ]
+        in let type_string = [ key "type" . Sep.space . store "string" .
+            ( Sep.space . len )? ]
+        in let type = ( type_ip | type_integer | type_string )
+        in let size = [ key "size" . Sep.space . store Rx.no_spaces ]
+        in let expire = [ key "expire" . Sep.space . store Rx.no_spaces ]
+        in let nopurge = [ key "nopurge" ]
+        in Util.indent . [ key "stick-table" . Sep.space . type . Sep.space .
+            size . ( Sep.space . expire )? . ( Sep.space . nopurge )? ] .
+            Util.eol
 
     let tcp_request_content_accept =
         let cond = [ key /if|unless/ . Sep.space . store_to_eol ]
