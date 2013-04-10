@@ -538,3 +538,90 @@ module Test_haproxy =
             { "maxconn" = "400" }
             { "weight" = "1" }
     }
+
+    test Haproxy.userlist_group get "   group G1 users tiger,scott\n" = {
+        "group"
+            { "name" = "G1" }
+            { "users"
+                { "user" = "tiger" }
+                { "user" = "scott" }
+            }
+    }
+
+    let userlist_conf1 = "userlist L1
+    group G1 users tiger,scott
+    group G2 users xdb,scott
+    user tiger password $6$k6y3o.eP$JlKBx9za9667qe4xHSwRv6J.C0/D7cV91
+    user scott insecure-password elgato
+    user xdb insecure-password hello\n"
+
+    test Haproxy.userlist get userlist_conf1 = {
+        "userlist"
+            { "name" = "L1" }
+            { "group"
+                { "name" = "G1" }
+                { "users"
+                    { "user" = "tiger" }
+                    { "user" = "scott" }
+                }
+            }
+            { "group"
+                { "name" = "G2" }
+                { "users"
+                    { "user" = "xdb" }
+                    { "user" = "scott" }
+                }
+            }
+            { "user"
+                { "name" = "tiger" }
+                { "password" = "$6$k6y3o.eP$JlKBx9za9667qe4xHSwRv6J.C0/D7cV91" }
+            }
+            { "user"
+                { "name" = "scott" }
+                { "insecure-password" = "elgato" }
+            }
+            { "user"
+                { "name" = "xdb" }
+                { "insecure-password" = "hello" }
+            }
+    }
+
+    let userlist_conf2 = "userlist L2
+    group G1
+    group G2
+    user tiger password $6$k6y3o.eP$JlKBx(...)xHSwRv6J.C0/D7cV91 groups G1
+    user scott insecure-password elgato groups G1,G2
+    user xdb insecure-password hello groups G2\n"
+
+    test Haproxy.userlist get userlist_conf2 = {
+        "userlist"
+            { "name" = "L2" }
+            { "group"
+                { "name" = "G1" }
+            }
+            { "group"
+                { "name" = "G2" }
+            }
+            { "user"
+                { "name" = "tiger" }
+                { "password" = "$6$k6y3o.eP$JlKBx(...)xHSwRv6J.C0/D7cV91" }
+                { "groups"
+                    { "group" = "G1" }
+                }
+            }
+            { "user"
+                { "name" = "scott" }
+                { "insecure-password" = "elgato" }
+                { "groups"
+                    { "group" = "G1" }
+                    { "group" = "G2" }
+                }
+            }
+            { "user"
+                { "name" = "xdb" }
+                { "insecure-password" = "hello" }
+                { "groups"
+                    { "group" = "G2" }
+                }
+            }
+    }

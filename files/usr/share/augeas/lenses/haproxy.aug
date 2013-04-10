@@ -74,9 +74,28 @@ module Haproxy =
 
     (*************************************************************************
       USER LISTS
-
-      TODO!
      *************************************************************************)
+    let userlist_group =
+        let name = [ label "name" . store Rx.no_spaces ] in
+        let group_user = [ label "user" . store /[^ \t\n,]+/ ] in
+        let users = [ key "users" . Sep.space . group_user .
+            ( Util.del_str "," . group_user )* ] in
+        indent . [ key "group" . Sep.space . name . ( Sep.space . users)? ] . Util.eol
+
+    let userlist_user =
+        let name = [ label "name" . store Rx.no_spaces ] in
+        let password = [ key /password|insecure-password/ . Sep.space .
+            store Rx.no_spaces ] in
+        let user_group = [ label "group" . store /[^ \t\n,]+/ ] in
+        let groups = [ key "groups" . Sep.space . user_group .
+            ( Util.del_str "," . user_group )* ] in
+        Util.indent . [ key "user" . Sep.space . name .
+            ( Sep.space . password )? . ( Sep.space . groups )? ] . Util.eol
+
+    let userlist =
+        let name = [ label "name" . store Rx.no_spaces ] in
+        [ key "userlist" . Sep.space . name . Util.eol .
+            ( userlist_user | userlist_group )* ]
 
     (*************************************************************************
      SERVER AND DEFAULT-SERVER
