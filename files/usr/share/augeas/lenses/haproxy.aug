@@ -79,6 +79,70 @@ module Haproxy =
      *************************************************************************)
 
     (*************************************************************************
+     SERVER AND DEFAULT-SERVER
+     *************************************************************************)
+    let source =
+        let addr = [ label "address" . store (/[^ \t\n:]+/ - /client(ip)?|hdr_ip.*/) ]
+        in let port = [ label "port" . store Rx.no_spaces ]
+        in let addr_and_port = addr . ( Util.del_str ":" . port )?
+        in let client = [ key "client" ]
+        in let clientip = [ key "clientip" ]
+        in let interface = [ key "interface" . Sep.space . store Rx.no_spaces ]
+        in let hdr = [ label "header" . store /[^ \t\n,\)]+/ ]
+        in let occ = [ label "occurrence" . store /[^ \t\n\)]+/ ]
+        in let hdr_ip = Util.del_str "hdr_ip(" . hdr .
+            ( Util.del_str "," . occ )? . Util.del_str ")"
+        in let usesrc = [ key "usesrc" . Sep.space . ( clientip | client | addr_and_port | hdr_ip ) ]
+        in [ key "source" . Sep.space . addr_and_port .
+            ( Sep.space . ( usesrc | interface ) )? ]
+
+    let server_options =
+        let health_addr = [ key "health_address" . Sep.space . store Rx.no_spaces ] in
+        let backup = [ key "backup" ] in
+        let check = [ key "check" ] in
+        let cookie = [ key "cookie" . Sep.space . store Rx.no_spaces ] in
+        let disabled = [ key "disabled" ] in
+        let id = [ key "id" . Sep.space . store Rx.no_spaces ] in
+        let observe = [ key "observe" . Sep.space . store Rx.no_spaces ] in
+        let redir = [ key "redir" . Sep.space . store Rx.no_spaces ] in
+        let server_source = source in
+        let track = [ key "track" . Sep.space .
+            ( [ label "proxy" . store /[^ \t\n\/]+/ . Util.del_str "/" ] )? .
+            [ label "server" . store /[^ \t\n\/]+/ ] ] in
+        ( health_addr | backup | check | cookie | disabled | id | observe |
+            redir | server_source | track )
+
+    let default_server_options =
+        let error_limit = [ key "error-limit" . Sep.space . store Rx.no_spaces ] in
+        let fall = [ key "fall" . Sep.space . store Rx.no_spaces ] in
+        let inter = [ key "inter" . Sep.space . store Rx.no_spaces ] in
+        let fastinter = [ key "fastinter" . Sep.space . store Rx.no_spaces ] in
+        let downinter = [ key "downinter" . Sep.space . store Rx.no_spaces ] in
+        let maxconn = [ key "maxconn" . Sep.space . store Rx.no_spaces ] in
+        let maxqueue = [ key "maxqueue" . Sep.space . store Rx.no_spaces ] in
+        let minconn = [ key "minconn" . Sep.space . store Rx.no_spaces ] in
+        let on_error = [ key "on-error" . Sep.space . store Rx.no_spaces ] in
+        let health_port = [ key "health_port" . Sep.space . store Rx.no_spaces ] in
+        let rise = [ key "rise" . Sep.space . store Rx.no_spaces ] in
+        let slowstart = [ key "slowstart" . Sep.space . store Rx.no_spaces ] in
+        let weight = [ key "weight" . Sep.space . store Rx.no_spaces ] in
+        ( error_limit | fall | inter | fastinter | downinter | maxconn |
+            maxqueue | minconn | on_error | health_port | rise | slowstart |
+            weight )
+
+    let default_server = [ key "default-server" . Sep.space .
+        default_server_options . ( Sep.space . default_server_options )* ]
+
+    let server =
+        let name = [ label "name" . store Rx.no_spaces ] in
+        let addr = [ label "address" . store /[^ \t\n:]+/ ] in
+        let port = [ label "port" . store Rx.no_spaces ] in
+        let addr_and_port = addr . ( Util.del_str ":" . port )? in
+        let options = ( server_options | default_server_options ) in
+        Util.indent . [ key "server" . Sep.space . name . Sep.space .
+            addr_and_port . ( Sep.space . options )* ]
+
+    (*************************************************************************
       PROXY OPTIONS
      *************************************************************************)
     let acl = indent . [ key "acl" . ws
@@ -427,20 +491,6 @@ module Haproxy =
 
     (* XXX server *)
 
-    let source =
-        let addr = [ label "address" . store (/[^ \t\n:]+/ - /client(ip)?|hdr_ip.*/) ]
-        in let port = [ label "port" . store Rx.no_spaces ]
-        in let addr_and_port = addr . ( Util.del_str ":" . port )?
-        in let client = [ key "client" ]
-        in let clientip = [ key "clientip" ]
-        in let interface = [ key "interface" . Sep.space . store Rx.no_spaces ]
-        in let hdr = [ label "header" . store /[^ \t\n,\)]+/ ]
-        in let occ = [ label "occurrence" . store /[^ \t\n\)]+/ ]
-        in let hdr_ip = Util.del_str "hdr_ip(" . hdr .
-            ( Util.del_str "," . occ )? . Util.del_str ")"
-        in let usesrc = [ key "usesrc" . Sep.space . ( clientip | client | addr_and_port | hdr_ip ) ] 
-        in Util.indent . [ key "source" . Sep.space . addr_and_port .
-            ( Sep.space . ( usesrc | interface ) )? ] . Util.eol
 
     let srvtimeout = kv_option "srvtimeout"
 

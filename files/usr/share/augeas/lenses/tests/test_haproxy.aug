@@ -464,18 +464,18 @@ module Test_haproxy =
             { "nopurge" }
     }
 
-    test Haproxy.source get "source 127.0.0.1\n" = {
+    test Haproxy.source get "source 127.0.0.1" = {
         "source"
             { "address" = "127.0.0.1" }
     }
 
-    test Haproxy.source get "source 127.0.0.1:8000\n" = {
+    test Haproxy.source get "source 127.0.0.1:8000" = {
         "source"
             { "address" = "127.0.0.1" }
             { "port" = "8000" }
     }
 
-    test Haproxy.source get "source 127.0.0.1:8000 usesrc 127.0.0.2:9000\n" = {
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc 127.0.0.2:9000" = {
         "source"
             { "address" = "127.0.0.1" }
             { "port" = "8000" }
@@ -485,7 +485,7 @@ module Test_haproxy =
             }
     }
 
-    test Haproxy.source get "source 127.0.0.1:8000 usesrc client\n" = {
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc client" = {
         "source"
             { "address" = "127.0.0.1" }
             { "port" = "8000" }
@@ -494,7 +494,7 @@ module Test_haproxy =
             }
     }
 
-    test Haproxy.source get "source 127.0.0.1:8000 usesrc clientip\n" = {
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc clientip" = {
         "source"
             { "address" = "127.0.0.1" }
             { "port" = "8000" }
@@ -503,7 +503,7 @@ module Test_haproxy =
             }
     }
 
-    test Haproxy.source get "source 127.0.0.1:8000 usesrc hdr_ip(Foo)\n" = {
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc hdr_ip(Foo)" = {
         "source"
             { "address" = "127.0.0.1" }
             { "port" = "8000" }
@@ -512,7 +512,7 @@ module Test_haproxy =
             }
     }
 
-    test Haproxy.source get "source 127.0.0.1:8000 usesrc hdr_ip(Foo,5)\n" = {
+    test Haproxy.source get "source 127.0.0.1:8000 usesrc hdr_ip(Foo,5)" = {
         "source"
             { "address" = "127.0.0.1" }
             { "port" = "8000" }
@@ -522,9 +522,19 @@ module Test_haproxy =
             }
     }
 
-    test Haproxy.source get "source 127.0.0.1:8000 interface bond1\n" = {
+    test Haproxy.source get "source 127.0.0.1:8000 interface bond1" = {
         "source"
             { "address" = "127.0.0.1" }
             { "port" = "8000" }
             { "interface" = "bond1" }
+    }
+
+    test Haproxy.server get "server foo1 127.0.0.1:80 check maxconn 400 weight 1" = {
+        "server"
+            { "name" = "foo1" }
+            { "address" = "127.0.0.1" }
+            { "port" = "80" }
+            { "check" }
+            { "maxconn" = "400" }
+            { "weight" = "1" }
     }
